@@ -156,86 +156,104 @@ static const char *phase_names[] =
 static void get_supported_resolutions_str(char *buf, size_t bufsize, int supported_resolutions)
 {
     int count = 0;
+    size_t pos = 0;
+    int ret;
+
     buf[0] = '\0';
 
     if (supported_resolutions & T4_RESOLUTION_R8_STANDARD)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "R8xSTD(~98x98dpi)", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xSTD(~98x98dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_R8_FINE)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "R8xFINE(~98x196dpi)", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xFINE(~98x196dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_R8_SUPERFINE)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "R8xSUPERFINE(~98x392dpi)", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xSUPERFINE(~98x392dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_R16_SUPERFINE)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "R16xSUPERFINE(~196x392dpi)", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%sR16xSUPERFINE(~196x392dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_100_100)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "100x100dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s100x100dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_200_100)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "200x100dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x100dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_200_200)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "200x200dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_200_400)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "200x400dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x400dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_300_300)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "300x300dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s300x300dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_300_600)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "300x600dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s300x600dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_400_400)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "400x400dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s400x400dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_400_800)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "400x800dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s400x800dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_600_600)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "600x600dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s600x600dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_600_1200)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "600x1200dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s600x1200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
     if (supported_resolutions & T4_RESOLUTION_1200_1200)
     {
-        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
-        strncat(buf, "1200x1200dpi", bufsize - strlen(buf) - 1);
+        ret = snprintf(buf + pos, bufsize - pos, "%s1200x1200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0) pos += ret;
+        if (pos >= bufsize - 1) return;
     }
 
     if (count == 0)
-        strncat(buf, "none", bufsize - strlen(buf) - 1);
+        snprintf(buf, bufsize, "none");
 }
 
 /* These state names are modelled after places in the T.30 flow charts. */
