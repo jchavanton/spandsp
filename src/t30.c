@@ -2592,6 +2592,15 @@ static int analyze_rx_dcs(t30_state_t *s, const uint8_t *msg, int len)
 
     if (x < 0)
     {
+        char supported_bilevel_buf[256];
+        char supported_colour_buf[256];
+        get_supported_resolutions_str(supported_bilevel_buf, sizeof(supported_bilevel_buf), s->supported_bilevel_resolutions);
+        get_supported_resolutions_str(supported_colour_buf, sizeof(supported_colour_buf), s->supported_colour_resolutions);
+
+        span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED (receiving): Remote requested unsupported resolution\n");
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Local bilevel resolutions supported: %s\n", supported_bilevel_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Local colour resolutions supported: %s\n", supported_colour_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Remote FAX should retry with standard resolution (R8xSTD)\n");
         t30_set_status(s, T30_ERR_NORESSUPPORT);
         return -1;
     }
