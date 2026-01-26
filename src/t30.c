@@ -2615,10 +2615,10 @@ static int analyze_rx_dcs(t30_state_t *s, const uint8_t *msg, int len)
         get_supported_resolutions_str(supported_bilevel_buf, sizeof(supported_bilevel_buf), s->supported_bilevel_resolutions);
         get_supported_resolutions_str(supported_colour_buf, sizeof(supported_colour_buf), s->supported_colour_resolutions);
 
-        span_log(&s->logging, SPAN_LOG_FLOW, "Accepted resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
+        span_log(&s->logging, SPAN_LOG_WARNING, "Accepted resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
                  s->x_resolution, s->y_resolution, s->current_page_resolution);
-        span_log(&s->logging, SPAN_LOG_FLOW, "  Local bilevel resolutions: %s\n", supported_bilevel_buf);
-        span_log(&s->logging, SPAN_LOG_FLOW, "  Local colour resolutions: %s\n", supported_colour_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Local bilevel resolutions: %s\n", supported_bilevel_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Local colour resolutions: %s\n", supported_colour_buf);
     }
 
     if (!test_ctrl_bit(dcs_frame, T30_DCS_BIT_RECEIVE_FAX_DOCUMENT))
@@ -3036,10 +3036,10 @@ static int start_sending_document(t30_state_t *s)
         get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
         get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
 
-        span_log(&s->logging, SPAN_LOG_FLOW, "Negotiated resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
+        span_log(&s->logging, SPAN_LOG_WARNING, "Negotiated resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
                  s->x_resolution, s->y_resolution, s->current_page_resolution);
-        span_log(&s->logging, SPAN_LOG_FLOW, "  Mutual bilevel resolutions: %s\n", mutual_bilevel_buf);
-        span_log(&s->logging, SPAN_LOG_FLOW, "  Mutual colour resolutions: %s\n", mutual_colour_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions: %s\n", mutual_bilevel_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions: %s\n", mutual_colour_buf);
     }
 
     span_log(&s->logging,
