@@ -2610,13 +2610,17 @@ static int analyze_rx_dcs(t30_state_t *s, const uint8_t *msg, int len)
     /* We don't care that much about the image length control bits. Just accept what arrives */
 
     {
+        t4_stats_t stats;
         char supported_bilevel_buf[256];
         char supported_colour_buf[256];
+
+        t4_rx_get_transfer_statistics(&s->t4.rx, &stats);
         get_supported_resolutions_str(supported_bilevel_buf, sizeof(supported_bilevel_buf), s->supported_bilevel_resolutions);
         get_supported_resolutions_str(supported_colour_buf, sizeof(supported_colour_buf), s->supported_colour_resolutions);
 
         span_log(&s->logging, SPAN_LOG_WARNING, "Accepted resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
                  s->x_resolution, s->y_resolution, s->current_page_resolution);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution in file: %d x %d pixels/meter\n", stats.image_x_resolution, stats.image_y_resolution);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Local bilevel resolutions: %s\n", supported_bilevel_buf);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Local colour resolutions: %s\n", supported_colour_buf);
     }
@@ -3000,12 +3004,16 @@ static int start_sending_document(t30_state_t *s)
             break;
         case T4_IMAGE_FORMAT_NORESSUPPORT:
             {
+                t4_stats_t stats;
                 char mutual_bilevel_buf[256];
                 char mutual_colour_buf[256];
+
+                t4_tx_get_transfer_statistics(&s->t4.tx, &stats);
                 get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
                 get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
 
                 span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED: Cannot negotiate an image resolution\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution in file: %d x %d pixels/meter\n", stats.image_x_resolution, stats.image_y_resolution);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported: %s\n", mutual_bilevel_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions supported: %s\n", mutual_colour_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to one of the mutually supported resolutions\n");
@@ -3031,13 +3039,17 @@ static int start_sending_document(t30_state_t *s)
     s->current_page_resolution = t4_tx_get_tx_resolution(&s->t4.tx);
 
     {
+        t4_stats_t stats;
         char mutual_bilevel_buf[256];
         char mutual_colour_buf[256];
+
+        t4_tx_get_transfer_statistics(&s->t4.tx, &stats);
         get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
         get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
 
         span_log(&s->logging, SPAN_LOG_WARNING, "Negotiated resolution: %d x %d pixels/meter (current_page_resolution=%d)\n",
                  s->x_resolution, s->y_resolution, s->current_page_resolution);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution in file: %d x %d pixels/meter\n", stats.image_x_resolution, stats.image_y_resolution);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions: %s\n", mutual_bilevel_buf);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions: %s\n", mutual_colour_buf);
     }
