@@ -152,6 +152,92 @@ static const char *phase_names[] =
     "CALL_FINISHED"
 };
 
+/* Helper function to get supported resolution alternatives */
+static void get_supported_resolutions_str(char *buf, size_t bufsize, int supported_resolutions)
+{
+    int count = 0;
+    buf[0] = '\0';
+
+    if (supported_resolutions & T4_RESOLUTION_R8_STANDARD)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "R8xSTD(~98x98dpi)", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_R8_FINE)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "R8xFINE(~98x196dpi)", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_R8_SUPERFINE)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "R8xSUPERFINE(~98x392dpi)", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_R16_SUPERFINE)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "R16xSUPERFINE(~196x392dpi)", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_100_100)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "100x100dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_100)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "200x100dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_200)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "200x200dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_400)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "200x400dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_300_300)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "300x300dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_300_600)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "300x600dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_400_400)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "400x400dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_400_800)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "400x800dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_600_600)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "600x600dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_600_1200)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "600x1200dpi", bufsize - strlen(buf) - 1);
+    }
+    if (supported_resolutions & T4_RESOLUTION_1200_1200)
+    {
+        if (count++ > 0) strncat(buf, ", ", bufsize - strlen(buf) - 1);
+        strncat(buf, "1200x1200dpi", bufsize - strlen(buf) - 1);
+    }
+
+    if (count == 0)
+        strncat(buf, "none", bufsize - strlen(buf) - 1);
+}
+
 /* These state names are modelled after places in the T.30 flow charts. */
 enum
 {
@@ -3020,8 +3106,18 @@ static int start_sending_document(t30_state_t *s)
             t30_set_status(s, T30_ERR_NOSIZESUPPORT);
             break;
         case T4_IMAGE_FORMAT_NORESSUPPORT:
-            span_log(&s->logging, SPAN_LOG_WARNING, "Cannot negotiate an image resolution\n");
-            t30_set_status(s, T30_ERR_NORESSUPPORT);
+            {
+                char mutual_bilevel_buf[256];
+                char mutual_colour_buf[256];
+                get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
+                get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
+
+                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED: Cannot negotiate an image resolution\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported: %s\n", mutual_bilevel_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions supported: %s\n", mutual_colour_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to one of the mutually supported resolutions\n");
+                t30_set_status(s, T30_ERR_NORESSUPPORT);
+            }
             break;
         default:
             span_log(&s->logging, SPAN_LOG_WARNING, "Cannot negotiate an image mode\n");
