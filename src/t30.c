@@ -149,6 +149,110 @@ static const char *phase_names[] =
     "CALL_FINISHED"
 };
 
+/* Helper function to get supported resolution alternatives */
+static void get_supported_resolutions_str(char *buf, size_t bufsize, int supported_resolutions)
+{
+    int count = 0;
+    size_t pos = 0;
+    int ret;
+
+    buf[0] = '\0';
+
+    if (supported_resolutions & T4_RESOLUTION_R8_STANDARD)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xSTD(~98x98dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_R8_FINE)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xFINE(~98x196dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_R8_SUPERFINE)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%sR8xSUPERFINE(~98x392dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_R16_SUPERFINE)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%sR16xSUPERFINE(~196x392dpi)", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_100_100)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s100x100dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_100)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x100dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_200)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_200_400)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s200x400dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_300_300)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s300x300dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_300_600)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s300x600dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_400_400)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s400x400dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_400_800)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s400x800dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_600_600)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s600x600dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_600_1200)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s600x1200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+    if (supported_resolutions & T4_RESOLUTION_1200_1200)
+    {
+        ret = snprintf(buf + pos, bufsize - pos, "%s1200x1200dpi", (count++ > 0) ? ", " : "");
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
+    }
+
+    if (count == 0)
+        snprintf(buf, bufsize, "none");
+}
+
 /* These state names are modelled after places in the T.30 flow charts. */
 enum
 {
@@ -2874,8 +2978,18 @@ static int start_sending_document(t30_state_t *s)
             t30_set_status(s, T30_ERR_NOSIZESUPPORT);
             break;
         case T4_IMAGE_FORMAT_NORESSUPPORT:
-            span_log(&s->logging, SPAN_LOG_WARNING, "Cannot negotiate an image resolution\n");
-            t30_set_status(s, T30_ERR_NORESSUPPORT);
+            {
+                char mutual_bilevel_buf[256];
+                char mutual_colour_buf[256];
+                get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
+                get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
+
+                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED: Cannot negotiate an image resolution\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported: %s\n", mutual_bilevel_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions supported: %s\n", mutual_colour_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to one of the mutually supported resolutions\n");
+                t30_set_status(s, T30_ERR_NORESSUPPORT);
+            }
             break;
         default:
             span_log(&s->logging, SPAN_LOG_WARNING, "Cannot negotiate an image mode\n");
