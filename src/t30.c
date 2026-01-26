@@ -164,92 +164,92 @@ static void get_supported_resolutions_str(char *buf, size_t bufsize, int support
     if (supported_resolutions & T4_RESOLUTION_R8_STANDARD)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%sR8xSTD(~98x98dpi)", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_R8_FINE)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%sR8xFINE(~98x196dpi)", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_R8_SUPERFINE)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%sR8xSUPERFINE(~98x392dpi)", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_R16_SUPERFINE)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%sR16xSUPERFINE(~196x392dpi)", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_100_100)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s100x100dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_200_100)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s200x100dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_200_200)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s200x200dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_200_400)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s200x400dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_300_300)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s300x300dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_300_600)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s300x600dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_400_400)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s400x400dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_400_800)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s400x800dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_600_600)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s600x600dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_600_1200)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s600x1200dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
     if (supported_resolutions & T4_RESOLUTION_1200_1200)
     {
         ret = snprintf(buf + pos, bufsize - pos, "%s1200x1200dpi", (count++ > 0) ? ", " : "");
-        if (ret > 0) pos += ret;
-        if (pos >= bufsize - 1) return;
+        if (ret > 0 && (size_t)ret < bufsize - pos) pos += ret;
+        else if (ret > 0) { pos = bufsize - 1; return; }
     }
 
     if (count == 0)
