@@ -1885,7 +1885,7 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             image_type_str = "UNKNOWN";
             break;
         }
-        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: type=%s, width=%d pixels, TIFF resolution=%d x %d pixels/meter, TIFF resolution_code=0x%x\n",
+        span_log(&s->logging, SPAN_LOG_WARNING, "[T4_TX.C V2] Image negotiation: type=%s, width=%d pixels, TIFF resolution=%d x %d pixels/meter, TIFF resolution_code=0x%x\n",
                  image_type_str, s->tiff.image_width, s->tiff.x_resolution, s->tiff.y_resolution, s->tiff.resolution_code);
     }
 
