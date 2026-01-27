@@ -3104,6 +3104,7 @@ static int start_sending_document(t30_state_t *s)
                                          s->mutual_bilevel_resolutions,
                                          s->mutual_colour_resolutions)) < 0)
     {
+        span_log(&s->logging, SPAN_LOG_WARNING, "t4_tx_set_tx_image_format() returned error code: %d\n", res);
         switch (res)
         {
         case T4_IMAGE_FORMAT_INCOMPATIBLE:
