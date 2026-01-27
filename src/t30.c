@@ -3042,6 +3042,16 @@ static int start_sending_document(t30_state_t *s)
 
     t4_tx_get_pages_in_file(&s->t4.tx);
 
+    /* Get TIFF stats immediately after init to see what we're dealing with */
+    {
+        t4_stats_t tiff_stats;
+        t4_tx_get_transfer_statistics(&s->t4.tx, &tiff_stats);
+        span_log(&s->logging, SPAN_LOG_WARNING, "TIFF file inspection BEFORE negotiation:\n");
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image type: %s\n", t4_image_type_to_str(tiff_stats.image_type));
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image dimensions: %d x %d pixels\n", tiff_stats.image_width, tiff_stats.image_length);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution: %d x %d pixels/meter\n", tiff_stats.image_x_resolution, tiff_stats.image_y_resolution);
+    }
+
     /* Log negotiation parameters before attempting format negotiation */
     {
         char mutual_bilevel_buf[256];
