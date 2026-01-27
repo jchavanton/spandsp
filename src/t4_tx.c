@@ -1783,7 +1783,7 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
     s->metadata.image_type = s->tiff.image_type;
     if (s->tiff.image_type != T4_IMAGE_TYPE_BILEVEL)
     {
-        span_log(&s->logging, SPAN_LOG_FLOW, "Non-bi-level image\n");
+        span_log(&s->logging, SPAN_LOG_WARNING, "Non-bi-level image\n");
         /* Can we send this page as it is? */
         if (supported_colour_resolutions
             &&
@@ -1798,7 +1798,7 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
                     (supported_compressions & T4_COMPRESSION_GRAYSCALE))))
         {
             /* Gray-scale/colour is possible */
-            span_log(&s->logging, SPAN_LOG_FLOW, "Gray-scale/colour is allowed\n");
+            span_log(&s->logging, SPAN_LOG_WARNING, "Gray-scale/colour is allowed\n");
             /* Choose the best gray-scale/colour encoding available to us */
             if (s->tiff.image_type == T4_IMAGE_TYPE_COLOUR_BILEVEL  &&  (supported_compressions & T4_COMPRESSION_T43))
                 compression = T4_COMPRESSION_T43;
@@ -1813,10 +1813,10 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
  
             //best_colour_resolution(s->tiff.x_resolution, supported_colour_resolutions);
         }
-        else 
+        else
         {
             /* Gray-scale/colour is not possible. Can we flatten the image to send it? */
-            span_log(&s->logging, SPAN_LOG_FLOW, "Gray-scale/colour is not allowed\n");
+            span_log(&s->logging, SPAN_LOG_WARNING, "Gray-scale/colour is not allowed\n");
             switch (s->tiff.image_type)
             {
             case T4_IMAGE_TYPE_COLOUR_BILEVEL:
@@ -1824,7 +1824,7 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             case T4_IMAGE_TYPE_COLOUR_12BIT:
                 if (!(supported_compressions & T4_COMPRESSION_COLOUR_TO_BILEVEL))
                 {
-                    span_log(&s->logging, SPAN_LOG_FLOW, "Flattening is not allowed\n");
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Flattening is not allowed\n");
                     return T4_IMAGE_FORMAT_INCOMPATIBLE;
                 }
                 break;
@@ -1832,14 +1832,14 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             case T4_IMAGE_TYPE_GRAY_12BIT:
                 if (!(supported_compressions & T4_COMPRESSION_GRAY_TO_BILEVEL))
                 {
-                    span_log(&s->logging, SPAN_LOG_FLOW, "Flattening is not allowed\n");
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Flattening is not allowed\n");
                     return T4_IMAGE_FORMAT_INCOMPATIBLE;
                 }
                 break;
             }
             /* Squashing to a bi-level image is possible */
             s->metadata.image_type = T4_IMAGE_TYPE_BILEVEL;
-            span_log(&s->logging, SPAN_LOG_FLOW, "The image will be flattened to %s\n", t4_image_type_to_str(s->metadata.image_type));
+            span_log(&s->logging, SPAN_LOG_WARNING, "The image will be flattened to %s\n", t4_image_type_to_str(s->metadata.image_type));
         }
     }
 
