@@ -1860,12 +1860,42 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
 
     /* Deal with the image width/resolution combination. */
     /* Look for a pattern that matches the image */
+
+    /* Log initial image parameters */
+    {
+        const char *image_type_str;
+        switch (s->metadata.image_type)
+        {
+        case T4_IMAGE_TYPE_BILEVEL:
+            image_type_str = "BILEVEL";
+            break;
+        case T4_IMAGE_TYPE_COLOUR_BILEVEL:
+            image_type_str = "COLOUR_BILEVEL";
+            break;
+        case T4_IMAGE_TYPE_4COLOUR_BILEVEL:
+            image_type_str = "4COLOUR_BILEVEL";
+            break;
+        case T4_IMAGE_TYPE_GRAY_8BIT:
+            image_type_str = "GRAY_8BIT";
+            break;
+        case T4_IMAGE_TYPE_GRAY_12BIT:
+            image_type_str = "GRAY_12BIT";
+            break;
+        default:
+            image_type_str = "UNKNOWN";
+            break;
+        }
+        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: type=%s, width=%d pixels, TIFF resolution=%d x %d pixels/meter, TIFF resolution_code=0x%x\n",
+                 image_type_str, s->tiff.image_width, s->tiff.x_resolution, s->tiff.y_resolution, s->tiff.resolution_code);
+    }
+
     s->metadata.width_code = -1;
     for (entry = 0;  s->tiff.image_width >= width_and_res_info[entry].width;  entry++)
     {
         if (s->tiff.image_width == width_and_res_info[entry].width  &&  s->tiff.resolution_code == width_and_res_info[entry].res_code)
         {
             s->metadata.width_code = width_and_res_info[entry].width_code;
+            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Found exact width/resolution match, width_code=0x%x\n", s->metadata.width_code);
             break;
         }
     }
@@ -1873,6 +1903,7 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
     if (s->metadata.width_code >= 0  &&  (supported_image_sizes & s->metadata.width_code))
     {
         /* We have a valid and supported width/resolution combination */
+        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Width/resolution combination is supported\n");
 
         /* No resize necessary */
         s->metadata.image_width = s->tiff.image_width;
@@ -1881,9 +1912,11 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
         res = T4_IMAGE_FORMAT_NORESSUPPORT;
         if (s->metadata.image_type == T4_IMAGE_TYPE_BILEVEL)
         {
+            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: BILEVEL image - checking resolution compatibility\n");
             if ((width_and_res_info[entry].res_code & supported_bilevel_resolutions))
             {
                 /* We can use the resolution of the original image */
+                span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: SUCCESS - Exact resolution match (res_code=0x%x matches supported bilevel)\n", width_and_res_info[entry].res_code);
                 s->metadata.resolution_code = s->tiff.resolution_code;
                 s->metadata.x_resolution = code_to_x_resolution(s->metadata.resolution_code);
                 s->metadata.y_resolution = code_to_y_resolution(s->metadata.resolution_code);
@@ -1893,10 +1926,10 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             {
                 /* We can do a metric/imperial swap, and have a usable resolution */
                 span_log(&s->logging,
-                         SPAN_LOG_FLOW,
-                         "Image resolution %s falls back to %s\n",
-                         t4_image_resolution_to_str(s->tiff.resolution_code),
-                         t4_image_resolution_to_str(width_and_res_info[entry].alt_res_code));
+                         SPAN_LOG_WARNING,
+                         "Image negotiation: SUCCESS - Metric/imperial swap fallback (0x%x -> 0x%x)\n",
+                         s->tiff.resolution_code,
+                         width_and_res_info[entry].alt_res_code);
                 s->metadata.resolution_code = width_and_res_info[entry].alt_res_code;
                 s->metadata.x_resolution = code_to_x_resolution(s->metadata.resolution_code);
                 s->metadata.y_resolution = code_to_y_resolution(s->metadata.resolution_code);
@@ -1904,11 +1937,14 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             }
             else
             {
+                span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Resolution code 0x%x not in supported bilevel (0x%x), trying fallbacks\n",
+                         width_and_res_info[entry].res_code, supported_bilevel_resolutions);
                 if (s->tiff.image_type == T4_IMAGE_TYPE_BILEVEL)
                 {
                     if ((s->tiff.resolution_code & (T4_RESOLUTION_200_400 | T4_RESOLUTION_200_200 | T4_RESOLUTION_R8_SUPERFINE | T4_RESOLUTION_R8_FINE)))
                     {
                         /* This might be a resolution we can squash down to something which is supported */
+                        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Resolution is squashable, searching for fallback\n");
                         for (i = 0;  i < 4;  i++)
                         {
                             if ((s->tiff.resolution_code & squashable[i].resolution))
@@ -1924,10 +1960,11 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
                                 if ((supported_bilevel_resolutions & squashable[i].fallback[j].resolution))
                                 {
                                     span_log(&s->logging,
-                                             SPAN_LOG_FLOW,
-                                             "Image resolution %s falls back to %s\n",
-                                             t4_image_resolution_to_str(s->tiff.resolution_code),
-                                             t4_image_resolution_to_str(squashable[i].fallback[j].resolution));
+                                             SPAN_LOG_WARNING,
+                                             "Image negotiation: SUCCESS - Row squashing fallback (0x%x -> 0x%x, squash factor=%d)\n",
+                                             s->tiff.resolution_code,
+                                             squashable[i].fallback[j].resolution,
+                                             squashable[i].fallback[j].squashing_factor);
                                     s->row_squashing_ratio = squashable[i].fallback[j].squashing_factor;
                                     s->metadata.resolution_code = squashable[i].fallback[j].resolution;
                                     s->metadata.x_resolution = code_to_x_resolution(s->metadata.resolution_code);
@@ -1936,7 +1973,19 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
                                     break;
                                 }
                             }
+                            if (j >= 4)
+                            {
+                                span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - No supported squashing fallback found\n");
+                            }
                         }
+                        else
+                        {
+                            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - Resolution not in squashable table\n");
+                        }
+                    }
+                    else
+                    {
+                        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - Resolution 0x%x is not squashable\n", s->tiff.resolution_code);
                     }
                 }
             }
@@ -1946,24 +1995,43 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
             if (res != T4_IMAGE_FORMAT_OK)
             {
                 if (s->tiff.image_type == T4_IMAGE_TYPE_BILEVEL)
+                {
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - BILEVEL image cannot be resized, no fallback available\n");
                     return T4_IMAGE_FORMAT_NORESSUPPORT;
+                }
                 if (!(supported_compressions & T4_COMPRESSION_RESCALING))
+                {
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - Rescaling not supported in compressions\n");
                     return T4_IMAGE_FORMAT_NOSIZESUPPORT;
+                }
+                span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Non-bilevel image will attempt rescaling\n");
             }
             /* TODO */
         }
         else
         {
+            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Non-BILEVEL image (color/grayscale)\n");
             if ((width_and_res_info[entry].res_code & supported_bilevel_resolutions))
             {
                 if ((s->tiff.resolution_code & supported_colour_resolutions))
                 {
                     /* We can use the resolution of the original image */
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: SUCCESS - Color/grayscale resolution matches\n");
                     s->metadata.resolution_code = width_and_res_info[entry].res_code;
                     s->metadata.x_resolution = code_to_x_resolution(s->metadata.resolution_code);
                     s->metadata.y_resolution = code_to_y_resolution(s->metadata.resolution_code);
                     res = T4_IMAGE_FORMAT_OK;
                 }
+                else
+                {
+                    span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - Color resolution 0x%x not in supported colour (0x%x)\n",
+                             s->tiff.resolution_code, supported_colour_resolutions);
+                }
+            }
+            else
+            {
+                span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - Resolution code 0x%x not in supported bilevel (0x%x)\n",
+                         width_and_res_info[entry].res_code, supported_bilevel_resolutions);
             }
         }
     }
@@ -1971,11 +2039,20 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
     {
         /* Can we rework the image to fit? */
         /* We can't rework a bilevel image that fits none of the patterns */
+        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: No exact width/resolution match found (width_code=%d, supported_sizes=0x%x)\n",
+                 s->metadata.width_code, supported_image_sizes);
         if (s->tiff.image_type == T4_IMAGE_TYPE_BILEVEL  ||  s->tiff.image_type == T4_IMAGE_TYPE_COLOUR_BILEVEL)
+        {
+            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - BILEVEL/COLOUR_BILEVEL image with no matching pattern cannot be reworked\n");
             return T4_IMAGE_FORMAT_NORESSUPPORT;
+        }
         if (!(supported_compressions & T4_COMPRESSION_RESCALING))
+        {
+            span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FAILED - No rescaling support available\n");
             return T4_IMAGE_FORMAT_NOSIZESUPPORT;
+        }
         /* Any other kind of image might be resizable */
+        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: Attempting to rework/resize non-bilevel image\n");
         res = T4_IMAGE_FORMAT_OK;
         /* TODO: use more sophisticated resizing */
         s->metadata.image_width = T4_WIDTH_200_A4;

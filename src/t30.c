@@ -2594,10 +2594,66 @@ static int analyze_rx_dcs(t30_state_t *s, const uint8_t *msg, int len)
     {
         char supported_bilevel_buf[256];
         char supported_colour_buf[256];
+        char dcs_bits_buf[512];
+        int is_colour_mode;
+
         get_supported_resolutions_str(supported_bilevel_buf, sizeof(supported_bilevel_buf), s->supported_bilevel_resolutions);
         get_supported_resolutions_str(supported_colour_buf, sizeof(supported_colour_buf), s->supported_colour_resolutions);
 
+        /* Determine if this is colour/grayscale or bilevel mode */
+        is_colour_mode = test_ctrl_bit(dcs_frame, T30_DCS_BIT_T81_MODE)
+                         || test_ctrl_bit(dcs_frame, T30_DCS_BIT_T43_MODE)
+                         || test_ctrl_bit(dcs_frame, T30_DCS_BIT_T45_MODE)
+                         || test_ctrl_bit(dcs_frame, T30_DCS_BIT_SYCC_T81_MODE);
+
+        /* Build a string showing which DCS resolution bits are set */
+        dcs_bits_buf[0] = '\0';
+        if (is_colour_mode)
+        {
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_COLOUR_GRAY_1200_1200))
+                strcat(dcs_bits_buf, "1200x1200 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_COLOUR_GRAY_600_600))
+                strcat(dcs_bits_buf, "600x600 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_400_400))
+                strcat(dcs_bits_buf, "400x400 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_300_300))
+                strcat(dcs_bits_buf, "300x300 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_200_200))
+                strcat(dcs_bits_buf, "200x200 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_COLOUR_GRAY_100_100))
+                strcat(dcs_bits_buf, "100x100 ");
+        }
+        else
+        {
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_1200_1200))
+                strcat(dcs_bits_buf, "1200x1200 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_600_1200))
+                strcat(dcs_bits_buf, "600x1200 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_600_600))
+                strcat(dcs_bits_buf, "600x600 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_400_800))
+                strcat(dcs_bits_buf, "400x800 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_400_400))
+                strcat(dcs_bits_buf, "400x400 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_300_600))
+                strcat(dcs_bits_buf, "300x600 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_300_300))
+                strcat(dcs_bits_buf, "300x300 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_200_400))
+                strcat(dcs_bits_buf, "200x400 ");
+            if (test_ctrl_bit(dcs_frame, T30_DCS_BIT_200_200))
+                strcat(dcs_bits_buf, "200x200 ");
+        }
+        /*endif*/
+        if (strlen(dcs_bits_buf) == 0)
+            strcpy(dcs_bits_buf, "(no resolution bits set)");
+        /*endif*/
+
         span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED (receiving): Remote requested unsupported resolution\n");
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Image type: %s\n", is_colour_mode ? "Colour/Grayscale" : "Bilevel");
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Remote requested resolution bits in DCS frame: %s\n", dcs_bits_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Compression requested: %s\n", t4_compression_to_str(s->line_compression));
+        span_log(&s->logging, SPAN_LOG_WARNING, "  ECM mode: %s\n", s->error_correcting_mode ? "Yes" : "No");
         span_log(&s->logging, SPAN_LOG_WARNING, "  Local bilevel resolutions supported: %s\n", supported_bilevel_buf);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Local colour resolutions supported: %s\n", supported_colour_buf);
         span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Remote FAX should retry with standard resolution (R8xSTD)\n");
@@ -3007,15 +3063,45 @@ static int start_sending_document(t30_state_t *s)
                 t4_stats_t stats;
                 char mutual_bilevel_buf[256];
                 char mutual_colour_buf[256];
+                char mutual_compression_buf[256];
 
                 t4_tx_get_transfer_statistics(&s->t4.tx, &stats);
                 get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
                 get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
 
-                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED: Cannot negotiate an image resolution\n");
+                /* Build a string showing mutually supported compressions */
+                mutual_compression_buf[0] = '\0';
+                if (s->mutual_compressions & T4_COMPRESSION_T4_1D)
+                    strcat(mutual_compression_buf, "T4-1D ");
+                if (s->mutual_compressions & T4_COMPRESSION_T4_2D)
+                    strcat(mutual_compression_buf, "T4-2D ");
+                if (s->mutual_compressions & T4_COMPRESSION_T6)
+                    strcat(mutual_compression_buf, "T6 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T85)
+                    strcat(mutual_compression_buf, "T85 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T85_L0)
+                    strcat(mutual_compression_buf, "T85-L0 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T42_T81)
+                    strcat(mutual_compression_buf, "T42/T81 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T43)
+                    strcat(mutual_compression_buf, "T43 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T45)
+                    strcat(mutual_compression_buf, "T45 ");
+                if (s->mutual_compressions & T4_COMPRESSION_SYCC_T81)
+                    strcat(mutual_compression_buf, "SYCC-T81 ");
+                if (s->mutual_compressions & T4_COMPRESSION_T88)
+                    strcat(mutual_compression_buf, "T88 ");
+                if (strlen(mutual_compression_buf) == 0)
+                    strcpy(mutual_compression_buf, "(none)");
+                /*endif*/
+
+                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED (transmitting): Cannot negotiate an image resolution\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Source file: %s\n", s->tx_file);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Image type in file: %s\n", t4_image_type_to_str(stats.image_type));
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution in file: %d x %d pixels/meter\n", stats.image_x_resolution, stats.image_y_resolution);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported: %s\n", mutual_bilevel_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions supported: %s\n", mutual_colour_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual compressions supported: %s\n", mutual_compression_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to one of the mutually supported resolutions\n");
                 t30_set_status(s, T30_ERR_NORESSUPPORT);
             }
