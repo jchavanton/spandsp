@@ -3042,6 +3042,62 @@ static int start_sending_document(t30_state_t *s)
 
     t4_tx_get_pages_in_file(&s->t4.tx);
 
+    /* Log negotiation parameters before attempting format negotiation */
+    {
+        char mutual_bilevel_buf[256];
+        char mutual_colour_buf[256];
+        char mutual_sizes_buf[256];
+        char mutual_compression_buf[256];
+
+        get_supported_resolutions_str(mutual_bilevel_buf, sizeof(mutual_bilevel_buf), s->mutual_bilevel_resolutions);
+        get_supported_resolutions_str(mutual_colour_buf, sizeof(mutual_colour_buf), s->mutual_colour_resolutions);
+
+        /* Build image sizes string */
+        mutual_sizes_buf[0] = '\0';
+        if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_215MM)
+            strcat(mutual_sizes_buf, "215mm ");
+        if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_255MM)
+            strcat(mutual_sizes_buf, "255mm ");
+        if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_303MM)
+            strcat(mutual_sizes_buf, "303mm ");
+        if (strlen(mutual_sizes_buf) == 0)
+            strcpy(mutual_sizes_buf, "(none)");
+        /*endif*/
+
+        /* Build mutual compressions string */
+        mutual_compression_buf[0] = '\0';
+        if (s->mutual_compressions & T4_COMPRESSION_T4_1D)
+            strcat(mutual_compression_buf, "T4-1D ");
+        if (s->mutual_compressions & T4_COMPRESSION_T4_2D)
+            strcat(mutual_compression_buf, "T4-2D ");
+        if (s->mutual_compressions & T4_COMPRESSION_T6)
+            strcat(mutual_compression_buf, "T6 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T85)
+            strcat(mutual_compression_buf, "T85 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T85_L0)
+            strcat(mutual_compression_buf, "T85-L0 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T42_T81)
+            strcat(mutual_compression_buf, "T42/T81 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T43)
+            strcat(mutual_compression_buf, "T43 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T45)
+            strcat(mutual_compression_buf, "T45 ");
+        if (s->mutual_compressions & T4_COMPRESSION_SYCC_T81)
+            strcat(mutual_compression_buf, "SYCC-T81 ");
+        if (s->mutual_compressions & T4_COMPRESSION_T88)
+            strcat(mutual_compression_buf, "T88 ");
+        if (strlen(mutual_compression_buf) == 0)
+            strcpy(mutual_compression_buf, "(none)");
+        /*endif*/
+
+        span_log(&s->logging, SPAN_LOG_WARNING, "=== STARTING IMAGE FORMAT NEGOTIATION ===\n");
+        span_log(&s->logging, SPAN_LOG_WARNING, "  File: %s\n", s->tx_file);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual compressions (0x%x): %s\n", s->mutual_compressions, mutual_compression_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual image sizes (0x%x): %s\n", s->mutual_image_sizes, mutual_sizes_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions (0x%x): %s\n", s->mutual_bilevel_resolutions, mutual_bilevel_buf);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions (0x%x): %s\n", s->mutual_colour_resolutions, mutual_colour_buf);
+    }
+
     if ((res = t4_tx_set_tx_image_format(&s->t4.tx,
                                          s->mutual_compressions,
                                          s->mutual_image_sizes,
@@ -3095,11 +3151,11 @@ static int start_sending_document(t30_state_t *s)
                     strcpy(mutual_compression_buf, "(none)");
                 /*endif*/
 
-                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED (transmitting): Cannot negotiate an image resolution\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "RESOLUTION NEGOTIATION FAILED (transmitting): Cannot negotiate an image resolution [CODE VERSION 2]\n");
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Source file: %s\n", s->tx_file);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Image type in file: %s\n", t4_image_type_to_str(stats.image_type));
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Image resolution in file: %d x %d pixels/meter\n", stats.image_x_resolution, stats.image_y_resolution);
-                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported: %s\n", mutual_bilevel_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual bilevel resolutions supported (HEX=0x%x): %s\n", s->mutual_bilevel_resolutions, mutual_bilevel_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual colour resolutions supported: %s\n", mutual_colour_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual compressions supported: %s\n", mutual_compression_buf);
                 span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to one of the mutually supported resolutions\n");
