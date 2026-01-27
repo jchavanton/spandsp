@@ -1778,6 +1778,9 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
     int res;
     int supported_colour_compressions;
 
+    span_log(&s->logging, SPAN_LOG_WARNING, "[T4_TX.C V3] ENTERED t4_tx_set_tx_image_format() - compressions=0x%x, sizes=0x%x, bilevel_res=0x%x, colour_res=0x%x\n",
+             supported_compressions, supported_image_sizes, supported_bilevel_resolutions, supported_colour_resolutions);
+
     supported_colour_compressions = supported_compressions & (T4_COMPRESSION_T42_T81 | T4_COMPRESSION_T43 | T4_COMPRESSION_T45 | T4_COMPRESSION_SYCC_T81);
     compression = -1;
     s->metadata.image_type = s->tiff.image_type;
