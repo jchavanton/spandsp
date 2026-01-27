@@ -2062,7 +2062,13 @@ SPAN_DECLARE(int) t4_tx_set_tx_image_format(t4_tx_state_t *s,
     }
 
     if (res != T4_IMAGE_FORMAT_OK)
+    {
+        span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FINAL RESULT = FAILED (returning error code %d)\n", res);
+        span_log(&s->logging, SPAN_LOG_WARNING, "  Resolution negotiation exhausted all options - see detailed logs above\n");
         return res;
+    }
+    /*endif*/
+    span_log(&s->logging, SPAN_LOG_WARNING, "Image negotiation: FINAL RESULT = SUCCESS\n");
 
     if (s->metadata.image_type != s->tiff.image_type  ||  s->metadata.image_width != s->tiff.image_width)
     {

@@ -3111,8 +3111,31 @@ static int start_sending_document(t30_state_t *s)
             t30_set_status(s, T30_ERR_BADTIFFHDR);
             break;
         case T4_IMAGE_FORMAT_NOSIZESUPPORT:
-            span_log(&s->logging, SPAN_LOG_WARNING, "Cannot negotiate an image size\n");
-            t30_set_status(s, T30_ERR_NOSIZESUPPORT);
+            {
+                t4_stats_t stats;
+                char mutual_sizes_buf[256];
+
+                t4_tx_get_transfer_statistics(&s->t4.tx, &stats);
+
+                /* Build image sizes string */
+                mutual_sizes_buf[0] = '\0';
+                if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_215MM)
+                    strcat(mutual_sizes_buf, "215mm ");
+                if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_255MM)
+                    strcat(mutual_sizes_buf, "255mm ");
+                if (s->mutual_image_sizes & T4_SUPPORT_WIDTH_303MM)
+                    strcat(mutual_sizes_buf, "303mm ");
+                if (strlen(mutual_sizes_buf) == 0)
+                    strcpy(mutual_sizes_buf, "(none)");
+                /*endif*/
+
+                span_log(&s->logging, SPAN_LOG_WARNING, "SIZE NEGOTIATION FAILED (transmitting): Cannot negotiate an image size\n");
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Source file: %s\n", s->tx_file);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Image width in file: %d pixels\n", stats.image_width);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Mutual image sizes supported (HEX=0x%x): %s\n", s->mutual_image_sizes, mutual_sizes_buf);
+                span_log(&s->logging, SPAN_LOG_WARNING, "  Suggestion: Resize image to a standard width (A4=1728px, B4=2048px, A3=2432px at 204dpi)\n");
+                t30_set_status(s, T30_ERR_NOSIZESUPPORT);
+            }
             break;
         case T4_IMAGE_FORMAT_NORESSUPPORT:
             {
