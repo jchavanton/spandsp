@@ -6979,16 +6979,42 @@ static void t30_hdlc_rx_status(void *user_data, int status)
             if (was_trained)
             {
                 /* We trained OK, so we should have some kind of received page, possibly with
-                   zero good HDLC frames. It just did'nt end cleanly with an RCP. */
-                span_log(&s->logging, SPAN_LOG_WARNING, "ECM signal did not end cleanly\n");
-                /* Fake the existance of an RCP, and proceed */
-                set_state(s, T30_STATE_F_POST_DOC_ECM);
-                queue_phase(s, T30_PHASE_D_RX);
-                timer_t2_start(s);
-                /* We at least trained, so any missing carrier status is out of date */
-                if (s->current_status == T30_ERR_RX_NOCARRIER)
-                    t30_set_status(s, T30_ERR_OK);
-                /*endif*/
+                   zero good HDLC frames. It just did'nt end cleanly with an RCP.
+                   Distinguish two sub-cases:
+                     1) Carrier dropped after the last data frame but before RCP — the
+                        block is fully populated. Original behaviour: fake an RCP and
+                        proceed (this is a common modem timing edge case and forcing
+                        OK avoids spurious failures).
+                     2) Carrier dropped mid-block — `ecm_len[i] == -1` for some frames.
+                        Faking RCP here silently produces a truncated page that is
+                        reported as successful. Instead, leave the status as
+                        T30_ERR_RX_NOCARRIER so the page is not finalized as OK. */
+                int missing_frames = 0;
+                int i;
+                for (i = 0;  i < s->ecm_frames;  i++)
+                {
+                    if (s->ecm_len[i] < 0)
+                        missing_frames++;
+                }
+                if (s->ecm_frames > 0  &&  missing_frames > 0)
+                {
+                    span_log(&s->logging, SPAN_LOG_WARNING,
+                             "ECM signal ended with %d/%d frames missing in block %d — treating as partial\n",
+                             missing_frames, s->ecm_frames, s->ecm_block);
+                    t30_set_status(s, T30_ERR_RX_NOCARRIER);
+                }
+                else
+                {
+                    span_log(&s->logging, SPAN_LOG_WARNING, "ECM signal did not end cleanly\n");
+                    /* Fake the existance of an RCP, and proceed */
+                    set_state(s, T30_STATE_F_POST_DOC_ECM);
+                    queue_phase(s, T30_PHASE_D_RX);
+                    timer_t2_start(s);
+                    /* We at least trained, so any missing carrier status is out of date */
+                    if (s->current_status == T30_ERR_RX_NOCARRIER)
+                        t30_set_status(s, T30_ERR_OK);
+                    /*endif*/
+                }
             }
             else
             {
